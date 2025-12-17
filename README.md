@@ -1,58 +1,128 @@
-# User-Access-vs-Billing-Reconciliation-System
+# Data Reconciliation Project
 
-# SaaS User Access vs Billing Reconciliation System
+## SaaS User Access vs Billing Reconciliation System
 
 Automated system to identify and quantify revenue leakage from mismatches between user account access and billing records.
 
 ![Dashboard Preview](tableau/screenshots/executive_dashboard.png)
 
 [![Tableau Public](https://img.shields.io/badge/Tableau-Live%20Dashboard-blue)](your-tableau-link)
-[![SQL](https://img.shields.io/badge/SQL-SQLite-green)](user_billing_reconciliation.db)
+[![SQL](https://img.shields.io/badge/SQL-SQLServer-blue)](user_billing_reconciliation.db)
 [![Python](https://img.shields.io/badge/Python-3.8%2B-yellow)](requirements.txt)
 
 ---
 
 ## 🎯 Project Overview
 
-In SaaS businesses, a critical but often overlooked problem is ensuring that **every user accessing paid features has an active, correctly-configured subscription**. This project demonstrates an automated reconciliation system that identifies:
+In SaaS businesses, a critical but often overlooked problem is ensuring that **every user accessing paid features has an active, correctly-configured subscription**. 
+This project identifies and quantifies discrepancies between user accounts and billing subscriptions. When your user management system and billing system aren't perfectly in sync, you lose revenue. This SQL-based solution finds those gaps automatically.
 
+### Why This Matters (Real-World Context)
+This isn't just a theoretical exercise. According to industry research:
+- SaaS companies lose an average of 5-10% of MRR to billing errors
+- Manual reconciliation takes finance teams 20-40 hours per month
+- Billing disputes cause 23% of involuntary churn
+
+This system automates what typically requires a full-time analyst, catching issues in real-time rather than quarterly audits.
+
+### The Problem
+You have two critical data sources:
+- **User Accounts Table**: Who's using your product and what plan they're on
+- **Billing Subscriptions Table**: Who's being charged and how much
+
+These should match perfectly, but they often don't. Users slip through the cracks, billing fails, plans get changed in one system but not the other. Each mismatch costs money.
+
+### What This Does
+It identifies seven critical types of reconciliation issues:
 - **Free Riders**: Users accessing paid features without billing ($4,455/mo average loss)
 - **Ghost Subscriptions**: Billing records without corresponding users ($850/mo refund liability)
-- **Plan Mismatches**: Users with wrong access level vs billing ($2,780/mo average loss)
+- **Plan Mismatches**: User's plan doesn't match their billing plan ($2,780/mo average loss)
 - **Status Mismatches**: Active users with failed/canceled payments
 - **Duplicate Billing**: Users charged multiple times for same service
 - **Billing Errors**: Free users being charged, deleted users still billed
+- **Expired Trials**: Trial periods ended but still getting paid features
+
+### Database Schema - Tables Required
+
+**user_accounts**
+```sql
+- user_id (Primary Key)
+- email
+- account_status (active, inactive, deleted, suspended)
+- plan_type (Free, Starter, Pro, Enterprise)
+- features_enabled
+- signup_date
+- last_login
+```
+
+**billing_subscriptions**
+```sql
+- subscription_id (Primary Key)
+- user_id (Foreign Key)
+- customer_email
+- plan (Free, Starter, Pro, Enterprise)
+- status (active, trialing, past_due, canceled)
+- billing_amount
+- start_date
+- current_period_end
+```
 
 ### 📊 Key Results
 
 | Metric | Value |
 |--------|-------|
-| **Total Monthly Revenue at Risk** | **$15,340** |
-| **Annual Projection** | **$184,080** |
+| **Total Monthly Revenue at Risk** | **$21,699** |
+| **Annual Projection** | **$260,388** |
 | **Users Analyzed** | 500 |
-| **Issues Identified** | 127 |
+| **Issues Identified** | 171 |
 | **Categories of Problems** | 7 |
-| **Average Issue Value** | $121/month |
 
+Revenue Leakage Rate represents the percentage of billed MRR currently exposed to access and billing inconsistencies. Expected MRR reflects theoretical revenue based on active user plans, not recognized revenue.
 ---
 
 ## 🛠️ Technologies & Skills Demonstrated
 
-**Data Analysis:**
-- SQL (complex joins, CTEs, window functions)
+**Technical:**
 - Python (Pandas, data generation, ETL)
-- Data quality & reconciliation techniques
+- Advanced SQL (CTEs, joins, window functions, reconciliation logic)
+- Data quality validation & anomaly detection
+- ETL pipeline development (Python → SQL → Tableau)
 
 **Visualization:**
 - Tableau (interactive dashboards, calculated fields)
 - Data storytelling
 - Executive-level reporting
+- Revenue leakage analysis (MRR-focused)
+
+
+**Analytical:**
+- Revenue leakage analysis & financial modeling
+- Trend detection
+- Root cause analysis for system discrepancies
+- Business rules translation into logic
 
 **Business Domain:**
 - SaaS metrics & operations
 - Revenue leakage analysis
 - Access control & billing systems
 - Customer lifecycle management
+Analytics & Business
+
+Revenue leakage analysis (MRR-focused)
+
+SaaS billing & access control logic
+
+Translating business rules into deterministic logic
+
+Executive KPI design and prioritization
+
+Visualization
+
+Tableau executive dashboards
+
+Revenue impact modeling
+
+Action-oriented reporting
 
 ---
 
@@ -97,52 +167,6 @@ saas-user-billing-reconciliation/
 
 ---
 
-## 🚀 Quick Start
-
-### Prerequisites
-
-```bash
-Python 3.8 or higher
-Tableau Desktop or Tableau Public (free)
-```
-
-### Installation
-
-**1. Clone the repository**
-```bash
-git clone https://github.com/yourusername/saas-user-billing-reconciliation.git
-cd saas-user-billing-reconciliation
-```
-
-**2. Install Python dependencies**
-```bash
-pip install -r requirements.txt
-```
-
-**3. Generate synthetic data**
-```bash
-python scripts/01_generate_data.py
-```
-This creates:
-- `user_accounts.csv` (500 users)
-- `billing_subscriptions.csv` (400+ subscriptions)
-
-**4. Set up SQL database**
-```bash
-python scripts/02_setup_database.py
-```
-This creates:
-- `user_billing_reconciliation.db` (SQLite database)
-- 10 CSV files for Tableau (prefixed with `tableau_`)
-- 9 SQL views for reconciliation
-
-**5. Open Tableau dashboard**
-- Launch Tableau Desktop
-- Open `tableau/user_billing_dashboard.twbx`
-- Or connect to the SQLite database manually
-
----
-
 ## 🔍 Reconciliation Logic
 
 ### Issue Type 1: Free Riders
@@ -178,7 +202,7 @@ WHERE u.account_status = 'active'
 SELECT b.*
 FROM billing_subscriptions b
 LEFT JOIN user_accounts u ON b.user_id = u.user_id
-WHERE b.status IN ('active', 'trialing')
+WHERE b.status IN ('active', 'trialing', 'past_due')
   AND u.user_id IS NULL
 ```
 
@@ -204,10 +228,11 @@ WHERE b.status IN ('active', 'trialing')
 
 **SQL Logic:**
 ```sql
-SELECT u.user_id, u.plan_type, b.plan
+SELECT u.user_id, u.plan_type,
+       b.[plan] as billing_plan
 FROM user_accounts u
 INNER JOIN billing_subscriptions b ON u.user_id = b.user_id
-WHERE u.plan_type != b.plan
+WHERE u.plan_type != b.[plan]
   AND u.plan_type != 'Free'
 ```
 
@@ -250,7 +275,7 @@ WHERE (u.account_status = 'active' AND b.status IN ('canceled', 'past_due'))
 
 **SQL Logic:**
 ```sql
-SELECT user_id, COUNT(*) as sub_count
+SELECT user_id, COUNT(*) as subscription_count
 FROM billing_subscriptions
 WHERE status IN ('active', 'trialing')
 GROUP BY user_id
@@ -296,7 +321,7 @@ SELECT u.user_id, b.current_period_end
 FROM user_accounts u
 INNER JOIN billing_subscriptions b ON u.user_id = b.user_id
 WHERE b.status = 'trialing'
-  AND b.current_period_end < CURRENT_DATE
+  AND b.current_period_end < CAST(GETDATE() AS DATE)
   AND u.account_status = 'active'
 ```
 
@@ -325,6 +350,9 @@ Detects users with multiple active subscriptions. Shows total overcharge amount.
 
 ### v_free_with_billing
 Lists Free tier users being charged. 100% refund candidates.
+
+### v_trial_issues
+Lists Trials that ended but user still has active access.
 
 ### v_summary_metrics
 High-level KPIs for dashboard: total users, subscriptions, issue counts.
@@ -380,27 +408,29 @@ Aggregates monthly revenue impact by issue type. Used for prioritization.
 REVENUE IMPACT SUMMARY
 ════════════════════════════════════════════════════
 
-Issue Type                          Count    Monthly Impact    Priority
+Issue Type                                        Count    Monthly Impact   
+───────────────────────────────────────────────────────────────────────
+Free Riders (No billing)                          29      $3,971           
+Status Mismatches (Active User-Payment failed)    29      $4,241           
+Status Mismatches (Inactive user-Active billing)  20      $2,430
+Plan Mismatches (Over-charging)                   20      $3,250           
+Plan Mismatches (Under-charging)                  19      $3,250           
+Ghost Subscriptions (No user)                     20      $2,280          
+Duplicate Subscriptions                           18      $1,012           
+Trial Period Expired                              15      $1,265
+Free with Billing                                  1      $0              
 ─────────────────────────────────────────────────────────────────────────
-Free Riders                          45      $4,455           CRITICAL
-Plan Mismatches (Under-charging)     28      $2,780           HIGH
-Status Mismatches                    32      $3,168           HIGH
-Ghost Subscriptions                  12      $1,188           MEDIUM
-Duplicate Subscriptions              8       $792             MEDIUM
-Free with Billing                    2       $58              LOW
-─────────────────────────────────────────────────────────────────────────
-TOTAL                               127      $12,441/month
-                                             $149,292/year
+TOTAL                                             171     $21,699/month
+                                                          $260,388/year
 
 Quick Wins (Fix in < 1 week):
-✓ Cancel ghost subscriptions: $1,188/mo recovered
-✓ Fix free with billing: $58/mo + avoid refund risk
-✓ Remove duplicate subs: $792/mo + improve customer satisfaction
+✓ Cancel ghost subscriptions: $2,280/mo recovered
+✓ Remove duplicate subs: $1,012/mo + improve customer satisfaction
 
 High-Value Fixes (Fix in < 1 month):
-✓ Create billing for free riders: $4,455/mo revenue capture
-✓ Update plan mismatches: $2,780/mo revenue optimization
-✓ Enforce payment failures: $3,168/mo + reduce bad debt
+✓ Create billing for free riders: $3,971/mo revenue capture
+✓ Update plan mismatches: $6,500/mo revenue optimization
+✓ Enforce payment failures: $/mo + reduce bad debt
 ```
 
 ---
@@ -438,87 +468,6 @@ High-Value Fixes (Fix in < 1 month):
 
 ---
 
-## 🔧 Setup & Configuration
-
-### Environment Variables (Optional)
-
-```bash
-# Database configuration
-export DB_PATH="user_billing_reconciliation.db"
-
-# Date ranges for analysis
-export ANALYSIS_START_DATE="2024-01-01"
-export ANALYSIS_END_DATE="2024-12-31"
-
-# Revenue thresholds for alerts
-export HIGH_IMPACT_THRESHOLD=100
-export MEDIUM_IMPACT_THRESHOLD=50
-```
-
-### Running Reconciliation
-
-**Daily Reconciliation (Recommended):**
-```bash
-# Run as scheduled job (cron/Task Scheduler)
-python scripts/02_setup_database.py
-# Outputs fresh CSV files for Tableau
-# Tableau Server can auto-refresh from these
-```
-
-**On-Demand Analysis:**
-```bash
-# Generate fresh data
-python scripts/01_generate_data.py
-
-# Run reconciliation
-python scripts/02_setup_database.py
-
-# View results
-sqlite3 user_billing_reconciliation.db "SELECT * FROM v_revenue_impact"
-```
-
----
-
-## 📊 Key Metrics & KPIs
-
-### Health Score
-```
-(Correctly Configured Users / Total Active Users) × 100
-
-Target: > 95%
-Warning: 90-95%
-Critical: < 90%
-```
-
-### Revenue Capture Rate
-```
-(Active Subscriptions / Active Paid Users) × 100
-
-Target: > 98%
-Warning: 95-98%
-Critical: < 95%
-```
-
-### Average Days to Detection
-```
-AVG(Current Date - Issue Creation Date)
-
-Target: < 7 days
-Warning: 7-14 days
-Critical: > 14 days
-```
-
-### Revenue at Risk Ratio
-```
-(Monthly Revenue at Risk / Total MRR) × 100
-
-Target: < 2%
-Warning: 2-5%
-Critical: > 5%
-```
-
----
-
 ## 🎯 Recommended Actions by Priority
 
 ### Priority 1: Immediate (Fix Today)
@@ -550,61 +499,6 @@ Critical: > 5%
 
 ---
 
-## 🤝 Contributing
-
-This is a portfolio/demonstration project, but suggestions are welcome!
-
-**To contribute:**
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/improvement`)
-3. Commit your changes (`git commit -am 'Add new reconciliation check'`)
-4. Push to the branch (`git push origin feature/improvement`)
-5. Open a Pull Request
-
-**Ideas for enhancements:**
-- Add email notification system for new issues
-- Integrate with actual payment processors (Stripe, Chargebee)
-- Build automated remediation workflows
-- Add machine learning for churn prediction
-- Create REST API for real-time checks
-
----
-
-## 📧 Contact & Links
-
-**Author:** Your Name  
-**Email:** your.email@example.com  
-**LinkedIn:** [linkedin.com/in/yourprofile](https://linkedin.com/in/yourprofile)  
-**Portfolio:** [yourwebsite.com](https://yourwebsite.com)  
-**Tableau Public:** [View Live Dashboard](your-tableau-link)
-
----
-
-## 📄 License
-
-MIT License - Feel free to use this for learning, portfolios, or adaptation for real business use.
-
----
-
-## 🙏 Acknowledgments
-
-- Inspired by real SaaS operational challenges
-- Dataset generation uses Python Faker library
-- Dashboard design follows Tableau best practices
-- SQL patterns adapted from industry reconciliation systems
-
----
-
-## ⭐ Support This Project
-
-If you found this helpful:
-- ⭐ Star this repository
-- 🔗 Share with others learning data analytics
-- 💬 Provide feedback via issues
-- 🤝 Connect with me on LinkedIn
-
----
-
-**Last Updated:** December 2024  
+**Last Updated:** December 2025  
 **Version:** 1.0.0  
 **Status:** ✅ Production-Ready Portfolio Project
