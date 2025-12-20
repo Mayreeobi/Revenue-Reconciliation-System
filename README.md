@@ -1,4 +1,4 @@
-# Data Reconciliation Project
+# Revenue Reconciliation Project
 
 ## SaaS User Access vs Billing Reconciliation System
 
@@ -12,60 +12,21 @@ Automated system to identify and quantify revenue leakage from mismatches betwee
 
 ---
 
-## 🎯 Project Overview
+## Project Overview
+Built an automated reconciliation system to identify revenue leakage in SaaS businesses by comparing user access logs against billing records. This system helps finance teams quickly spot discrepancies between who has active access and who's actually being billed. 
 
-In SaaS businesses, a critical but often overlooked problem is ensuring that **every user accessing paid features has an active, correctly-configured subscription**. 
-This project identifies and quantifies discrepancies between user accounts and billing subscriptions. When your user management system and billing system aren't perfectly in sync, you lose revenue. This SQL-based solution finds those gaps automatically.
+## The Business Problem
+SaaS companies often face a critical challenge: users with active system access who aren't being billed, or inactive users still being charged. According to industry research, SaaS companies lose 5-10% of monthly recurring revenue to billing errors, and manual reconciliation takes finance teams 20-40 hours per month. This system automates what typically requires a full-time analyst.
 
-### Why This Matters (Real-World Context)
-This isn't just a theoretical exercise. According to industry research:
-- SaaS companies lose an average of 5-10% of MRR to billing errors
-- Manual reconciliation takes finance teams 20-40 hours per month
-- Billing disputes cause 23% of involuntary churn
-
-This system automates what typically requires a full-time analyst, catching issues in real-time rather than quarterly audits.
-
-### The Problem
-You have two critical data sources:
-- **User Accounts Table**: Who's using your product and what plan they're on
-- **Billing Subscriptions Table**: Who's being charged and how much
-
-These should match perfectly, but they often don't. Users slip through the cracks, billing fails, plans get changed in one system but not the other. Each mismatch costs money.
-
-### What This Does
-It identifies seven critical types of reconciliation issues:
-- **Free Riders**: Users accessing paid features without billing ($4,455/mo average loss)
-- **Ghost Subscriptions**: Billing records without corresponding users ($850/mo refund liability)
-- **Plan Mismatches**: User's plan doesn't match their billing plan ($2,780/mo average loss)
-- **Status Mismatches**: Active users with failed/canceled payments
+## What This Does
+The system identifies seven critical types of reconciliation issues:
+- **Free Riders**: Users accessing paid features without billing ($4,455/mo average loss) ($3,971/month loss)
+- **Ghost Subscriptions**: Billing records without corresponding users ($2,280/month refund liability)
+- **Plan Mismatches**: User's plan doesn't match their billing plan ($6,500/month impact)
+- **Status Mismatches**: Active users with failed/canceled payments ($4,241/month loss)
 - **Duplicate Billing**: Users charged multiple times for same service
 - **Billing Errors**: Free users being charged, deleted users still billed
 - **Expired Trials**: Trial periods ended but still getting paid features
-
-### Database Schema - Tables Required
-
-**user_accounts**
-```sql
-- user_id (Primary Key)
-- email
-- account_status (active, inactive, deleted, suspended)
-- plan_type (Free, Starter, Pro, Enterprise)
-- features_enabled
-- signup_date
-- last_login
-```
-
-**billing_subscriptions**
-```sql
-- subscription_id (Primary Key)
-- user_id (Foreign Key)
-- customer_email
-- plan (Free, Starter, Pro, Enterprise)
-- status (active, trialing, past_due, canceled)
-- billing_amount
-- start_date
-- current_period_end
-```
 
 ### 📊 Key Results
 
@@ -77,52 +38,29 @@ It identifies seven critical types of reconciliation issues:
 | **Issues Identified** | 171 |
 | **Categories of Problems** | 7 |
 
-Revenue Leakage Rate represents the percentage of billed MRR currently exposed to access and billing inconsistencies. Expected MRR reflects theoretical revenue based on active user plans, not recognized revenue.
+- Revenue Leakage Rate represents the percentage of billed MRR currently exposed to access and billing inconsistencies. Expected MRR reflects theoretical revenue based on active user plans, not recognized revenue.
 ---
 
 ## 🛠️ Technologies & Skills Demonstrated
 
 **Technical:**
 - Python (Pandas, data generation, ETL)
-- Advanced SQL (CTEs, joins, window functions, reconciliation logic)
+- Advanced SQL queries (Joins, window functions, reconciliation logic)
 - Data quality validation & anomaly detection
-- ETL pipeline development (Python → SQL → Tableau)
+- ETL pipeline development (Python → SQL → Power BI)
 
 **Visualization:**
-- Tableau (interactive dashboards, calculated fields)
+- Power BI (interactive dashboards, DAX)
 - Data storytelling
 - Executive-level reporting
 - Revenue leakage analysis (MRR-focused)
 
-
-**Analytical:**
-- Revenue leakage analysis & financial modeling
-- Trend detection
-- Root cause analysis for system discrepancies
-- Business rules translation into logic
-
-**Business Domain:**
+**Analytical & Business:**
 - SaaS metrics & operations
-- Revenue leakage analysis
+- Revenue leakage analysis & financial modeling
+- Root cause analysis for system discrepancies
+- Business logic implementation
 - Access control & billing systems
-- Customer lifecycle management
-Analytics & Business
-
-Revenue leakage analysis (MRR-focused)
-
-SaaS billing & access control logic
-
-Translating business rules into deterministic logic
-
-Executive KPI design and prioritization
-
-Visualization
-
-Tableau executive dashboards
-
-Revenue impact modeling
-
-Action-oriented reporting
 
 ---
 
@@ -132,37 +70,18 @@ Action-oriented reporting
 saas-user-billing-reconciliation/
 │
 ├── README.md                          # This file
-├── requirements.txt                   # Python dependencies
-├── .gitignore                        # Excludes data files
-│
 ├── data/
-│   ├── .gitkeep
 │   └── README.md                     # Data dictionary
 │
 ├── scripts/
-│   ├── 01_generate_data.py           # Creates synthetic dataset
-│   ├── 02_setup_database.py          # SQL database & views
-│   └── 03_reconciliation_analysis.py # Python analysis (optional)
+│   └── generate_data.py             # Creates synthetic dataset
 │
 ├── sql/
-│   ├── create_tables.sql             # Table schemas
 │   ├── create_views.sql              # Reconciliation views
-│   ├── sample_queries.sql            # Example analyses
-│   └── README.md                     # SQL documentation
+│   └── sample_queries.sql            # Example analyses
 │
-├── tableau/
-│   ├── user_billing_dashboard.twbx   # Tableau workbook
-│   └── screenshots/                  # Dashboard images
-│       ├── executive_summary.png
-│       ├── free_riders.png
-│       ├── user_health_matrix.png
-│       └── revenue_impact.png
-│
-└── docs/
-    ├── data_dictionary.md            # Field definitions
-    ├── business_rules.md             # Reconciliation logic
-    ├── setup_guide.md                # Installation instructions
-    └── tableau_guide.md              # Dashboard documentation
+└── tableau/
+    └── Dashboard                     # Dashboard   
 ```
 
 ---
@@ -393,12 +312,6 @@ Aggregates monthly revenue impact by issue type. Used for prioritization.
 - Shows user details, issue type, impact
 - "Action Required" field with recommendations
 - Exportable for operations team
-
-### Trend Analysis
-- Issues over time (by signup cohort)
-- Day-of-week patterns
-- Seasonal trends
-- Correlation with product changes
 
 ---
 
