@@ -1,6 +1,4 @@
-# Revenue Reconciliation Project
-
-## SaaS User Access vs Billing Reconciliation System
+# SaaS User Access vs Billing Reconciliation System
 
 Automated system to identify and quantify revenue leakage from mismatches between user account access and billing records.
 
